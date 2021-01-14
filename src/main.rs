@@ -3,7 +3,7 @@ use std::io::Write;
 
 const PI2: Fsize = 2.0 * std::f64::consts::PI as Fsize;
 const DIM: usize = 2;
-const EPSILON: Fsize = 1e-8;
+const EPSILON: Fsize = std::f64::EPSILON * 1e2;
 const TIME_STEP: Fsize = 1e-4;
 const PLOT_PERIOD: Fsize = TIME_STEP * 25.0;
 const SIMULATION_STEPS: usize = (8.0 * 2.0 * std::f64::consts::PI / (TIME_STEP as f64)) as usize;
@@ -231,7 +231,7 @@ fn main() -> std::io::Result<()> {
             } else if cfg!(feature = "earth-moon") {
                 String::from("result-em.txt")
             } else {
-                String::from("result")
+                String::from("result.txt")
             }
         )?;
     }
@@ -242,6 +242,7 @@ fn main() -> std::io::Result<()> {
     let mut plot_time: Fsize = 0.0;
     let mut orig_pos: [Fsize; DIM] = [ 0.0; DIM ];
     orig_pos.copy_from_slice(&state[0..DIM]);
+    println!("Simulating {} steps.", SIMULATION_STEPS);
 
     for _i in 0..SIMULATION_STEPS {
         state = add(&state, &integrator(&state, TIME_STEP));
@@ -264,21 +265,24 @@ fn main() -> std::io::Result<()> {
         println!("Benchmarking integrator...");
         out = File::create(format!("benchmark-{}.txt", integrator_name))?;
 
-        state = initial_conditions();
-        time = 0.0;
+        for i in 1..5001 {
+            state = initial_conditions();
+            time = 0.0;
 
-        for i in 1..11 {
-            let time_step: Fsize = i as Fsize * 1e-3;
-            let steps = (2.0 * std::f64::consts::PI / (time_step as f64)) as usize;
+            let time_step: Fsize = (i as Fsize) * 1e-4;
+            let steps = (2.0 * std::f64::consts::PI / (time_step as f64)) as usize; 
 
             for _j in 0..steps {
                 state = add(&state, &integrator(&state, time_step));
                 time += time_step;
             }
 
+            state = add(&state, &integrator(&state, (2.0 * std::f64::consts::PI - (time as f64)) as Fsize));
+
             let dst = dist(&orig_pos, &state[0..DIM]);
-            println!("{:.3}\t{}", time_step, dst);
-            out.write_all(format!("{:.3}\t{}\n", time_step, dst).as_bytes())?;
+            let line = format!("{:.7}\t{}\n", time_step, dst);
+
+            out.write_all(line.as_bytes())?;
         }
     }
 
