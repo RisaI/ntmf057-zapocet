@@ -3,7 +3,7 @@ use std::io::Write;
 
 const PI2: Fsize = 2.0 * std::f64::consts::PI as Fsize;
 const DIM: usize = 2;
-const EPSILON: Fsize = std::f64::EPSILON * 1e2;
+const EPSILON: Fsize = 1e-8;
 const TIME_STEP: Fsize = 1e-4;
 const PLOT_PERIOD: Fsize = TIME_STEP * 25.0;
 const SIMULATION_STEPS: usize = (8.0 * 2.0 * std::f64::consts::PI / (TIME_STEP as f64)) as usize;
@@ -265,7 +265,7 @@ fn main() -> std::io::Result<()> {
         println!("Benchmarking integrator...");
         out = File::create(format!("benchmark-{}.txt", integrator_name))?;
 
-        for i in 1..5001 {
+        for i in 1..1_001 {
             state = initial_conditions();
             time = 0.0;
 
